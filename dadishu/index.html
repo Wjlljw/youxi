@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打地鼠游戏</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>🔨 打地鼠游戏 🐹</h1>
+            <div class="game-info">
+                <div class="score">
+                    <span>得分: </span>
+                    <span id="score">0</span>
+                </div>
+                <div class="time">
+                    <span>时间: </span>
+                    <span id="time">30</span>
+                    <span>秒</span>
+                </div>
+                <div class="high-score">
+                    <span>最高分: </span>
+                    <span id="high-score">0</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="game-board">
+                <div class="hole" data-hole="1">
+                    <div class="mole"></div>
+                </div>
+                <div class="hole" data-hole="2">
+                    <div class="mole"></div>
+                </div>
+                <div class="hole" data-hole="3">
+                    <div class="mole"></div>
+                </div>
+                <div class="hole" data-hole="4">
+                    <div class="mole"></div>
+                </div>
+                <div class="hole" data-hole="5">
+                    <div class="mole"></div>
+                </div>
+                <div class="hole" data-hole="6">
+                    <div class="mole"></div>
+                </div>
+                <div class="hole" data-hole="7">
+                    <div class="mole"></div>
+                </div>
+                <div class="hole" data-hole="8">
+                    <div class="mole"></div>
+                </div>
+                <div class="hole" data-hole="9">
+                    <div class="mole"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="controls">
+                <button id="start-btn" class="btn">开始游戏</button>
+                <button id="pause-btn" class="btn" disabled>暂停</button>
+                <button id="reset-btn" class="btn">重置</button>
+            </div>
+            <div class="difficulty">
+                <label for="difficulty">难度:</label>
+                <select id="difficulty">
+                    <option value="easy">简单</option>
+                    <option value="medium" selected>中等</option>
+                    <option value="hard">困难</option>
+                </select>
+            </div>
+        </footer>
+    </div>
+
+    <div class="game-over-modal" id="game-over-modal">
+        <div class="modal-content">
+            <h2>游戏结束！</h2>
+            <p>最终得分: <span id="final-score">0</span></p>
+            <p id="new-record" style="display: none;">🎉 新纪录！</p>
+            <button id="play-again-btn" class="btn">再玩一次</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

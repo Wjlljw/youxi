@@ -1,0 +1,507 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+}
+
+.game-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 800px;
+    width: 100%;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+h1 {
+    color: #333;
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.score, .time, .high-score {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 1.2em;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    margin: 5px;
+}
+
+.game-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin: 30px auto;
+    max-width: 500px;
+    perspective: 1000px;
+}
+
+.hole {
+    width: 150px;
+    height: 150px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.hole::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: radial-gradient(ellipse at center, #8b4513 0%, #654321 70%, #4a3018 100%);
+    border-radius: 50%;
+    box-shadow: inset 0 10px 20px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+.mole {
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle at 30% 30%, #8b6f47, #5d4e37);
+    border-radius: 50% 50% 40% 40%;
+    position: absolute;
+    bottom: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: bottom 0.3s ease-out;
+    z-index: 1;
+    cursor: pointer;
+}
+
+.mole::before {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #000;
+    border-radius: 50%;
+    top: 25px;
+    left: 20px;
+    box-shadow: 20px 0 0 #000;
+}
+
+.mole::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 8px;
+    background: #ff69b4;
+    border-radius: 50%;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.mole.up {
+    bottom: 30px;
+}
+
+.mole.whacked {
+    animation: whack 0.6s ease-out;
+}
+
+@keyframes whack {
+    0% {
+        transform: translateX(-50%) scale(1) rotate(0deg);
+        filter: brightness(1);
+    }
+    20% {
+        transform: translateX(-50%) scale(1.3) rotate(-15deg);
+        filter: brightness(1.5) hue-rotate(180deg);
+        box-shadow: 0 0 30px rgba(255, 255, 0, 0.8);
+    }
+    40% {
+        transform: translateX(-50%) scale(1.5) rotate(15deg);
+        filter: brightness(2) hue-rotate(270deg);
+        box-shadow: 0 0 50px rgba(255, 100, 0, 0.9);
+    }
+    60% {
+        transform: translateX(-50%) scale(1.2) rotate(-10deg);
+        filter: brightness(1.5) hue-rotate(360deg);
+        box-shadow: 0 0 40px rgba(255, 0, 100, 0.7);
+    }
+    80% {
+        transform: translateX(-50%) scale(0.8) rotate(180deg);
+        filter: brightness(0.8) saturate(0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateX(-50%) scale(0) rotate(360deg);
+        bottom: -80px;
+        filter: brightness(0) saturate(0);
+        opacity: 0;
+    }
+}
+
+.mole.whacked::before {
+    animation: eyes 0.6s ease-out;
+}
+
+@keyframes eyes {
+    0% {
+        transform: scale(1);
+    }
+    20% {
+        transform: scale(1.5);
+        background: #ff0000;
+    }
+    40% {
+        transform: scale(2);
+        background: #ff6600;
+    }
+    60% {
+        transform: scale(1.5);
+        background: #ffaa00;
+    }
+    100% {
+        transform: scale(0);
+        background: transparent;
+    }
+}
+
+.mole.whacked::after {
+    animation: nose 0.6s ease-out;
+}
+
+@keyframes nose {
+    0% {
+        transform: translateX(-50%) scale(1);
+    }
+    20% {
+        transform: translateX(-50%) scale(1.8);
+        background: #ff0066;
+    }
+    40% {
+        transform: translateX(-50%) scale(2.2);
+        background: #ff3366;
+    }
+    60% {
+        transform: translateX(-50%) scale(1.5);
+        background: #ff6699;
+    }
+    100% {
+        transform: translateX(-50%) scale(0);
+        background: transparent;
+    }
+}
+
+.hole.hit-effect {
+    animation: holeHit 0.4s ease-out;
+}
+
+@keyframes holeHit {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    }
+}
+
+.score-popup {
+    position: absolute;
+    color: #ffff00;
+    font-size: 2.5em;
+    font-weight: bold;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 255, 0, 0.8);
+    pointer-events: none;
+    z-index: 1000;
+    animation: scoreFloat 1.2s ease-out forwards;
+}
+
+@keyframes scoreFloat {
+    0% {
+        transform: translateY(0) scale(0.5) rotate(0deg);
+        opacity: 0;
+        filter: brightness(1);
+    }
+    20% {
+        transform: translateY(-25px) scale(1.8) rotate(5deg);
+        opacity: 1;
+        filter: brightness(1.5) drop-shadow(0 0 15px rgba(255, 255, 0, 0.9));
+    }
+    50% {
+        transform: translateY(-50px) scale(1.3) rotate(-3deg);
+        opacity: 1;
+        filter: brightness(2) drop-shadow(0 0 25px rgba(255, 200, 0, 1));
+    }
+    100% {
+        transform: translateY(-100px) scale(1) rotate(0deg);
+        opacity: 0;
+        filter: brightness(1);
+    }
+}
+
+.particle {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: radial-gradient(circle, #ff6b6b, #ffaa00, #ff00ff);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 999;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    animation: particleFly 1s ease-out forwards;
+}
+
+@keyframes particleFly {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+        filter: brightness(2) hue-rotate(0deg);
+    }
+    50% {
+        transform: translate(var(--vx), var(--vy)) scale(1.5);
+        opacity: 0.8;
+        filter: brightness(3) hue-rotate(180deg);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 1);
+    }
+    100% {
+        transform: translate(calc(var(--vx) * 2), calc(var(--vy) * 2 + 50px)) scale(0);
+        opacity: 0;
+        filter: brightness(0) hue-rotate(360deg);
+    }
+}
+
+.screen-shake {
+    animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0) translateY(0);
+    }
+    10% {
+        transform: translateX(-5px) translateY(-2px) rotate(-1deg);
+    }
+    20% {
+        transform: translateX(5px) translateY(2px) rotate(1deg);
+    }
+    30% {
+        transform: translateX(-3px) translateY(-1px) rotate(-0.5deg);
+    }
+    40% {
+        transform: translateX(3px) translateY(1px) rotate(0.5deg);
+    }
+    50% {
+        transform: translateX(-2px) translateY(-1px) rotate(-0.3deg);
+    }
+    60% {
+        transform: translateX(2px) translateY(1px) rotate(0.3deg);
+    }
+    70% {
+        transform: translateX(-1px) translateY(0px) rotate(-0.1deg);
+    }
+    80% {
+        transform: translateX(1px) translateY(0px) rotate(0.1deg);
+    }
+    90% {
+        transform: translateX(-0.5px) translateY(0px) rotate(0deg);
+    }
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.difficulty {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.difficulty label {
+    font-weight: bold;
+    color: #333;
+    margin-right: 10px;
+}
+
+.difficulty select {
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 2px solid #667eea;
+    background: white;
+    color: #333;
+    font-size: 1em;
+    cursor: pointer;
+    outline: none;
+}
+
+.game-over-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-content h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 2em;
+}
+
+.modal-content p {
+    color: #666;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+#new-record {
+    color: #ff6b6b;
+    font-weight: bold;
+    font-size: 1.3em;
+}
+
+@media (max-width: 768px) {
+    .game-container {
+        padding: 20px;
+        margin: 20px;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+    
+    .game-board {
+        gap: 15px;
+        max-width: 350px;
+    }
+    
+    .hole {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .mole {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .game-info {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .score, .time, .high-score {
+        margin: 5px 0;
+        width: 200px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .game-board {
+        gap: 10px;
+        max-width: 280px;
+    }
+    
+    .hole {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .mole {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn {
+        width: 150px;
+    }
+}
