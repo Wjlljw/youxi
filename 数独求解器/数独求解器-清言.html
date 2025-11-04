@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数独大师 - 求解与练习</title>
+    <style>
+        /* --- 全局与字体 --- */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --info-color: #17a2b8;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --grid-border-color: #adb5bd;
+            --cell-bg-color: #ffffff;
+            --cell-hover-bg: #e9ecef;
+            --user-input-bg: #e6f7ff;
+            --correct-answer-color: #008000;
+            --incorrect-answer-bg: #f8d7da;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- 主容器 --- */
+        .container {
+            background-color: var(--cell-bg-color);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(50, 50, 93, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
+            text-align: center;
+            max-width: 700px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: var(--dark-color);
+            margin-bottom: 5px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .instructions {
+            color: var(--secondary-color);
+            margin-bottom: 25px;
+            font-size: 1em;
+            min-height: 40px;
+        }
+
+        /* --- 模式切换 --- */
+        .mode-switcher {
+            display: inline-flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background-color: var(--light-color);
+            border-radius: 50px;
+            padding: 5px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+        }
+        .mode-btn {
+            padding: 10px 25px;
+            border: none;
+            background-color: transparent;
+            color: var(--secondary-color);
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95em;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .mode-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        }
+
+        /* --- 数独表格样式 --- */
+        .sudoku-grid {
+            display: inline-grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 0;
+            border: 3px solid var(--grid-border-color);
+            margin-bottom: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .sudoku-grid input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 500;
+            color: var(--dark-color);
+            border: 1px solid #dee2e6;
+            box-sizing: border-box;
+            -moz-appearance: textfield;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+            background-color: var(--cell-bg-color);
+        }
+
+        .sudoku-grid input::-webkit-outer-spin-button,
+        .sudoku-grid input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .sudoku-grid input:hover:not(.readonly) {
+            background-color: var(--cell-hover-bg);
+            transform: scale(1.05);
+        }
+        
+        .sudoku-grid input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: var(--user-input-bg);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            transform: scale(1.05);
+            z-index: 10;
+            position: relative;
+        }
+        
+        /* 3x3 宫格分隔线 */
+        .sudoku-grid input:nth-child(3n) { border-right: 2px solid var(--grid-border-color); }
+        .sudoku-grid input:nth-child(n+19):nth-child(-n+27),
+        .sudoku-grid input:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--grid-border-color); }
+
+        /* --- 不同状态下的格子样式 --- */
+        .user-input { color: var(--dark-color); font-weight: 700; background-color: var(--user-input-bg); }
+        .solved-answer { color: var(--primary-color); font-style: italic; font-weight: 500; }
+        .puzzle-problem { color: var(--dark-color); font-weight: 700; background-color: var(--light-color); }
+        .user-answer-correct { color: var(--correct-answer-color); font-weight: 700; animation: pulse-correct 0.5s ease; }
+        .user-answer-incorrect { color: var(--danger-color); font-weight: 700; background-color: var(--incorrect-answer-bg); animation: shake 0.5s ease; }
+        .readonly { background-color: var(--light-color); cursor: not-allowed; box-shadow: none !important; transform: scale(1) !important; }
+
+        /* --- 动画效果 --- */
+        @keyframes pulse-correct {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+            20%, 40%, 60%, 80% { transform: translateX(3px); }
+        }
+
+        /* --- 按钮样式 --- */
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 28px;
+            font-size: 1em;
+            font-weight: 500;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        button:hover { transform: translateY(-3px); box-shadow: 0 7px 15px rgba(0,0,0,0.15); }
+        button:active { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        button:disabled { background-color: var(--secondary-color); cursor: not-allowed; transform: none; box-shadow: none; }
+
+        #solveBtn { background-color: var(--primary-color); }
+        #clearBtn { background-color: var(--warning-color); }
+        #generateBtn { background-color: var(--success-color); }
+        #checkBtn { background-color: var(--info-color); }
+        #revealBtn { background-color: var(--secondary-color); }
+
+        /* --- 消息提示样式 --- */
+        #message {
+            margin-top: 25px;
+            font-weight: 500;
+            font-size: 1.1em;
+            min-height: 28px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #message:not(:empty) { opacity: 1; }
+        .success { color: var(--success-color); }
+        .error { color: var(--danger-color); }
+        .info { color: var(--info-color); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🧩 数独大师</h1>
+        
+        <div class="mode-switcher">
+            <button class="mode-btn active" id="solveModeBtn">求解模式</button>
+            <button class="mode-btn" id="practiceModeBtn">练习模式</button>
+        </div>
+
+        <p class="instructions" id="instructions">在下方格子中填入数字，0 或留空代表空白格。填好后点击“求解”按钮。</p>
+
+        <div class="sudoku-grid" id="sudoku-grid"></div>
+
+        <div class="buttons" id="buttonContainer"></div>
+
+        <p id="message"></p>
+    </div>
+
+    <script>
+        // --- DOM 元素 ---
+        const grid = document.getElementById('sudoku-grid');
+        const messageEl = document.getElementById('message');
+        const instructionsEl = document.getElementById('instructions');
+        const buttonContainer = document.getElementById('buttonContainer');
+        const solveModeBtn = document.getElementById('solveModeBtn');
+        const practiceModeBtn = document.getElementById('practiceModeBtn');
+
+        let currentMode = 'solve';
+        let solutionBoard = [];
+
+        // --- 初始化：创建81个输入框 ---
+        function initializeGrid() {
+            grid.innerHTML = '';
+            for (let i = 0; i < 81; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 1;
+                input.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^1-9]/g, '');
+                    if (currentMode === 'practice') {
+                        e.target.classList.remove('user-answer-correct', 'user-answer-incorrect');
+                    }
+                });
+                grid.appendChild(input);
+            }
+        }
+
+        // --- UI 控制函数 ---
+        function setMode(mode) {
+            currentMode = mode;
+            solveModeBtn.classList.toggle('active', mode === 'solve');
+            practiceModeBtn.classList.toggle('active', mode === 'practice');
+            
+            initializeGrid();
+            messageEl.textContent = '';
+            
+            if (mode === 'solve') {
+                instructionsEl.textContent = '在下方格子中填入数字，0 或留空代表空白格。填好后点击“求解”按钮。';
+                buttonContainer.innerHTML = '<button id="solveBtn">求解</button><button id="clearBtn">清空</button>';
+                document.getElementById('solveBtn').addEventListener('click', handleSolve);
+                document.getElementById('clearBtn').addEventListener('click', handleClear);
+            } else {
+                instructionsEl.textContent = '点击“生成题目”开始一个新的数独挑战。完成后点击“检查答案”。';
+                buttonContainer.innerHTML = '<button id="generateBtn">生成题目</button><button id="checkBtn">检查答案</button><button id="revealBtn">显示答案</button>';
+                document.getElementById('generateBtn').addEventListener('click', handleGenerate);
+                document.getElementById('checkBtn').addEventListener('click', handleCheck);
+                document.getElementById('revealBtn').addEventListener('click', handleReveal);
+            }
+        }
+
+        // --- 求解模式逻辑 ---
+        function getBoardAndMarkUserInputs() {
+            const inputs = grid.querySelectorAll('input');
+            const board = [];
+            for (let i = 0; i < 9; i++) {
+                const row = [];
+                for (let j = 0; j < 9; j++) {
+                    const input = inputs[i * 9 + j];
+                    const value = input.value;
+                    if (value !== '') {
+                        row.push(parseInt(value, 10));
+                        input.classList.add('user-input');
+                    } else {
+                        row.push(0);
+                        input.classList.remove('user-input', 'solved-answer');
+                    }
+                }
+                board.push(row);
+            }
+            return board;
+        }
+
+        function fillGridWithBoard(board, answerClass = 'solved-answer') {
+            const inputs = grid.querySelectorAll('input');
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const input = inputs[i * 9 + j];
+                    if (input.value === '') {
+                        input.value = board[i][j];
+                        input.classList.add(answerClass);
+                    }
+                }
+            }
+        }
+        
+        function handleSolve() {
+            showMessage('正在求解中...', 'info');
+            setTimeout(() => {
+                const board = getBoardAndMarkUserInputs();
+                if (solveSudoku(board)) {
+                    fillGridWithBoard(board);
+                    showMessage('求解成功！', 'success');
+                } else {
+                    showMessage('此数独无解或题目有误，请检查输入！', 'error');
+                }
+            }, 100);
+        }
+
+        // --- 练习模式逻辑 ---
+        function generateSudoku() {
+            const board = Array(9).fill().map(() => Array(9).fill(0));
+            fillSudokuBoard(board);
+            solutionBoard = board.map(row => [...row]);
+            const cellsToRemove = 45;
+            let removed = 0;
+            while (removed < cellsToRemove) {
+                const r = Math.floor(Math.random() * 9);
+                const c = Math.floor(Math.random() * 9);
+                if (board[r][c] !== 0) {
+                    board[r][c] = 0;
+                    removed++;
+                }
+            }
+            return board;
+        }
+
+        function fillSudokuBoard(board) {
+            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] === 0) {
+                        shuffleArray(numbers);
+                        for (let num of numbers) {
+                            if (isValidMove(board, r, c, num)) {
+                                board[r][c] = num;
+                                if (fillSudokuBoard(board)) return true;
+                                board[r][c] = 0;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        
+        function isValidMove(board, row, col, num) {
+            for (let x = 0; x < 9; x++) if (board[row][x] === num) return false;
+            for (let x = 0; x < 9; x++) if (board[x][col] === num) return false;
+            const startRow = row - row % 3, startCol = col - col % 3;
+            for (let i = 0; i < 3; i++)
+                for (let j = 0; j < 3; j++)
+                    if (board[i + startRow][j + startCol] === num) return false;
+            return true;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function handleGenerate() {
+            initializeGrid();
+            const puzzle = generateSudoku();
+            const inputs = grid.querySelectorAll('input');
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const input = inputs[i * 9 + j];
+                    if (puzzle[i][j] !== 0) {
+                        input.value = puzzle[i][j];
+                        input.classList.add('puzzle-problem');
+                        input.readOnly = true;
+                    }
+                }
+            }
+            showMessage('新题目已生成，请开始作答！', 'success');
+        }
+
+        function handleCheck() {
+            const inputs = grid.querySelectorAll('input');
+            let isCorrect = true;
+            let isComplete = true;
+
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const input = inputs[i * 9 + j];
+                    if (input.readOnly) continue;
+
+                    const userValue = input.value;
+                    const correctValue = solutionBoard[i][j];
+
+                    if (userValue === '') {
+                        isComplete = false;
+                        input.classList.remove('user-answer-correct', 'user-answer-incorrect');
+                    } else if (parseInt(userValue, 10) === correctValue) {
+                        input.classList.add('user-answer-correct');
+                        input.classList.remove('user-answer-incorrect');
+                    } else {
+                        input.classList.add('user-answer-incorrect');
+                        input.classList.remove('user-answer-correct');
+                        isCorrect = false;
+                    }
+                }
+            }
+
+            if (!isComplete) {
+                showMessage('还有格子未填写，请继续！', 'info');
+            } else if (isCorrect) {
+                showMessage('恭喜你，全部答对！🎉', 'success');
+            } else {
+                showMessage('有错误，请检查标红的格子！', 'error');
+            }
+        }
+
+        function handleReveal() {
+            const inputs = grid.querySelectorAll('input');
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const input = inputs[i * 9 + j];
+                    if (!input.readOnly) {
+                        input.value = solutionBoard[i][j];
+                        input.classList.add('solved-answer');
+                        input.readOnly = true;
+                    }
+                }
+            }
+            showMessage('答案已显示。', 'info');
+        }
+
+        // --- 通用函数 ---
+        function handleClear() {
+            initializeGrid();
+            showMessage('已清空所有格子。', 'info');
+        }
+        
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = type;
+        }
+
+        // --- 数独求解核心逻辑 (与之前相同) ---
+        function solveSudoku(board) {
+            const findEmpty = (b) => { for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (b[r][c] === 0) return [r, c]; return null; };
+            const isValid = (b, pos, num) => {
+                const [r, c] = pos;
+                for (let i = 0; i < 9; i++) if (b[r][i] === num && i !== c) return false;
+                for (let i = 0; i < 9; i++) if (b[i][c] === num && i !== r) return false;
+                const boxRow = Math.floor(r / 3) * 3, boxCol = Math.floor(c / 3) * 3;
+                for (let i = boxRow; i < boxRow + 3; i++) for (let j = boxCol; j < boxCol + 3; j++) if (b[i][j] === num && [i, j].toString() !== pos.toString()) return false;
+                return true;
+            };
+            const solve = () => {
+                const emptyPos = findEmpty(board);
+                if (!emptyPos) return true;
+                const [r, c] = emptyPos;
+                for (let num = 1; num <= 9; num++) {
+                    if (isValid(board, [r, c], num)) {
+                        board[r][c] = num;
+                        if (solve()) return true;
+                        board[r][c] = 0;
+                    }
+                }
+                return false;
+            };
+            return solve();
+        }
+
+        // --- 事件监听器 ---
+        solveModeBtn.addEventListener('click', () => setMode('solve'));
+        practiceModeBtn.addEventListener('click', () => setMode('practice'));
+
+        // --- 页面加载完成后初始化 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setMode('solve');
+        });
+    </script>
+
+</body>
+</html>
